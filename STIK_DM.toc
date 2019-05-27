@@ -1,0 +1,6 @@
+## Interface: 30300
+## Title: ДМ ролевой системы от FriendSnowy
+## Version: 1.0
+## DefaultState: Enabled
+SDM.xml
+SDMMiniMapButton.xml
