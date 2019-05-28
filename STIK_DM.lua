@@ -108,7 +108,15 @@ function DMAddonReady()
                 return false;
             end;
 
-            if (tonumber(trackNumber) < 1 or tonumber(trackNumber) > 10) then
+            local tracksByCategory = {
+                tvr = 10,
+                epc = 10,
+                pcf = 11,
+                btl = 12,
+                dng = 13,
+            };
+
+            if (tonumber(trackNumber) < 1 or tonumber(trackNumber) > tracksByCategory[category]) then
                 print ('Неверный номер трека');
                 return false;
             end;
