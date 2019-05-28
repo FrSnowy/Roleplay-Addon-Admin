@@ -194,6 +194,49 @@ function DMAddonReady()
         SLASH_kickCommand1 = '/gamekick';
     end;
 
+    local function RegisterEffectCommands()
+        local function isAllFilled(msg, category, trackNumber)
+            if (msg == '') then
+                print('Не указана категория и номер эффекта');
+                return false;
+            end;
+
+            if (not(category == 'whisper') and not(category == 'scream')) then
+                print('Неверная категория. Доступные: whisper, scream');
+                return false;
+            end;
+
+            local tracksByCategory = {
+                whisper = 3,
+                scream = 2,
+            };
+
+            if (tonumber(trackNumber) < 1 or tonumber(trackNumber) > tracksByCategory[category]) then
+                print ('Неверный номер эффекта');
+                return false;
+            end;
+
+            return true;
+        end;
+
+        SlashCmdList['effectCommand'] = function(msg)
+            local category, trackNumber = strsplit(' ', msg);
+            if (isAllFilled(msg, category, trackNumber)) then NotifyPrivate('S11', recieveTargetName(), category..'_'..trackNumber) end;
+        end;
+        
+        SlashCmdList['effectCommandRaid'] = function(msg)
+            local category, trackNumber = strsplit(' ', msg);
+            if (isAllFilled(msg, category, trackNumber)) then NotifyParty('S11', recieveTargetName(), category..'_'..trackNumber) end;
+        end;
+
+        SLASH_effectCommand1 = '/play_effect';
+        SLASH_effectCommand2 = '/play_ef';
+        SLASH_effectCommandRaid1 = '/play_effect_raid';
+        SLASH_effectCommandRaid2 = '/play_effect_r';
+        SLASH_effectCommandRaid3 = '/play_ef_raid';
+        SLASH_effectCommandRaid4 = '/play_ef_r';
+    end;
+
     RegisterExperienceCommands();
     RegsterLevelControllCommanads();
     RegsterInfoCommand();
@@ -204,4 +247,32 @@ function DMAddonReady()
     RegisterBarrierCommands();
     RegisterDamageCommands();
     RegisterKickCommands();
+    RegisterEffectCommands();
 end;
+
+STIKDMMiniMapButtonPosition = {
+	locationAngle = -45,
+	x = 52-(80*cos(-45)),
+	y = ((80*sin(-45))-52)
+};
+
+function STIK_DM_MiniMapButtonPosition_LoadFromDefaults()
+	STIKButton:SetPoint("TOPLEFT","Minimap","TOPLEFT",STIKMiniMapButtonPosition.x,STIKMiniMapButtonPosition.y);
+end
+
+function STIKDMMiniMapButton_Reposition()
+	STIKDMMiniMapButtonPosition.x = 52-(80*cos(STIKDMMiniMapButtonPosition.locationAngle));
+	STIKDMMiniMapButtonPosition.y = ((80*sin(STIKDMMiniMapButtonPosition.locationAngle))-52);
+	STIK_DM_MiniMapButton:SetPoint("TOPLEFT","Minimap","TOPLEFT",STIKDMMiniMapButtonPosition.x,STIKDMMiniMapButtonPosition.y);
+end
+
+function STIK_DM_MiniMapButton_Minimap_Update()
+	local xpos,ypos = GetCursorPosition();
+	local xmin,ymin = Minimap:GetLeft(), Minimap:GetBottom();
+
+	xpos = xmin-xpos/UIParent:GetScale()+70 ;
+	ypos = ypos/UIParent:GetScale()-ymin-70;
+
+	STIKDMMiniMapButtonPosition.locationAngle = math.deg(math.atan2(ypos,xpos));
+	STIKDMMiniMapButton_Reposition();
+end

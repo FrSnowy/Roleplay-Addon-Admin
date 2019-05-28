@@ -27,7 +27,7 @@
 			<OnEnter>
 				STIK_DM_MiniMapButtonTooltip:ClearLines()
 				STIK_DM_MiniMapButtonTooltip:SetOwner(STIK_DM_MiniMapButton,"CENTER")
-				STIK_DM_MiniMapButtonTooltip:AddLine("Система игры от Snowy (Админ)")
+				STIK_DM_MiniMapButtonTooltip:AddLine("Система игры от Снежка - Ведущий")
 				STIK_DM_MiniMapButtonTooltip:AddLine("Нажмите для открытия меню")
 				STIK_DM_MiniMapButtonTooltip:Show()
 			</OnEnter>
@@ -37,7 +37,7 @@
 		</Scripts>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="STIK_DM_MiniMapButton_Icon" file="interface\ICONS\inv_misc_dice_02">
+				<Texture name="STIK_DM_MiniMapButton_Icon" file="interface\ICONS\inv_misc_dice_01">
 					<Size>
 						<AbsDimension x="20" y="20" />
 					</Size>
@@ -62,7 +62,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="STIKMiniMapButton_DraggingFrame" hidden="true">
+			<Frame name="STIK_DM_MiniMapButton_DraggingFrame" hidden="true">
 				<Scripts>
 					<OnUpdate>
 						STIK_DM_MiniMapButton_Minimap_Update()
