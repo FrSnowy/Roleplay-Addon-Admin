@@ -1,4 +1,4 @@
-function DMAddonReady()
+function DM_REGISTER_COMMANDS()
     local function recieveTargetName ()
         return UnitName("target") or nil;
     end;
@@ -250,6 +250,262 @@ function DMAddonReady()
     RegisterEffectCommands();
 end;
 
+function DM_REGISTER_PANELS()
+    local texts = {
+        panels = {
+            main = {
+                title = "Сюжеты",
+            },
+            addPlot = {
+                content = "Добавить",
+            },
+            plot = {
+                title = "Новый сюжет",
+                name = "Название сюжета:",
+                description = "Краткое описание:",
+                submit = "Сохранить",
+            },
+        },
+    };
+
+    STIK_MAIN_PANEL_OFFSET = 0;
+
+    local function createAddPlotPanel(parent)
+        local AddPlotPanel = CreateFrame("Button", "AddPlotPanel", parent);
+            AddPlotPanel:Show();
+            AddPlotPanel:EnableMouse();
+            AddPlotPanel:SetWidth(256);
+            AddPlotPanel:SetHeight(64);
+            AddPlotPanel:SetToplevel(true);
+            AddPlotPanel:SetBackdropColor(0, 0, 0, 1);
+            AddPlotPanel:SetFrameStrata("FULLSCREEN_DIALOG");
+            AddPlotPanel:SetPoint("CENTER", parent, "TOP", 0, -260);
+            AddPlotPanel:SetNormalTexture("Interface\\AddOns\\STIK_DM\\IMG\\panel-background.blp");
+            AddPlotPanel:SetHighlightTexture("Interface\\AddOns\\STIK_DM\\IMG\\panel-background-hover.blp");
+            AddPlotPanel:SetScript("OnClick", function() AddPlotView:Show(); end);
+
+        local AddPlotIcon = CreateFrame("Button", "AddPlotPanelIcon", AddPlotPanel);
+            AddPlotIcon:Show();
+            AddPlotIcon:SetWidth(16);
+            AddPlotIcon:SetHeight(16);
+            AddPlotIcon:SetToplevel(true);
+            AddPlotIcon:SetBackdropColor(0, 0, 0, 1);
+            AddPlotIcon:SetFrameStrata("FULLSCREEN_DIALOG");
+            AddPlotIcon:SetPoint("LEFT", AddPlotPanel, "LEFT", 16, -8);
+            AddPlotIcon:SetNormalTexture("Interface\\AddOns\\STIK_DM\\IMG\\add.blp");
+
+        local AddPlotText = AddPlotPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            AddPlotText:SetPoint("LEFT", AddPlotPanel, "LEFT", 48, -8);
+            AddPlotText:SetText(texts.panels.addPlot.content);
+            AddPlotText:Show();
+
+        return AddPlotPanel;
+    end;
+
+    local function createPlotPanel(parent, plot, index)
+        local PlotPanel = CreateFrame("Button", "AddPlotPanel", parent);
+            PlotPanel:Show();
+            PlotPanel:EnableMouse();
+            PlotPanel:SetWidth(226);
+            PlotPanel:SetHeight(64);
+            PlotPanel:SetToplevel(true);
+            PlotPanel:SetBackdropColor(0, 0, 0, 1);
+            PlotPanel:SetFrameStrata("FULLSCREEN_DIALOG");
+            PlotPanel:SetPoint("CENTER", parent, "TOP", 0, -60 - 45 * (index - 1 - STIK_MAIN_PANEL_OFFSET));
+            PlotPanel:SetNormalTexture("Interface\\AddOns\\STIK_DM\\IMG\\plot-background.blp");
+            PlotPanel:SetHighlightTexture("Interface\\AddOns\\STIK_DM\\IMG\\plot-background.blp");
+
+        local PlotName = PlotPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            PlotName:SetPoint("LEFT", PlotPanel, "LEFT", 0, -8);
+            PlotName:SetText(plot.name);
+            PlotName:Show();
+    end;
+
+    local function createMainPanel()
+        if (MainPanelSTIK_DM) then
+            MainPanelSTIK_DM:Hide();
+        end;
+
+        local MainPanelSTIK_DM = CreateFrame("Frame", "MainPanelSTIK_DM", UIParent);
+            MainPanelSTIK_DM:Show();
+            MainPanelSTIK_DM:EnableMouse();
+            MainPanelSTIK_DM:SetWidth(320);
+            MainPanelSTIK_DM:SetHeight(320);
+            MainPanelSTIK_DM:SetToplevel(true);
+            MainPanelSTIK_DM:SetBackdropColor(0, 0, 0, 1);
+            MainPanelSTIK_DM:SetFrameStrata("FULLSCREEN_DIALOG");
+            MainPanelSTIK_DM:SetPoint("CENTER", UIParent, "CENTER", 0, 0);
+            MainPanelSTIK_DM:SetBackdrop({
+                bgFile = "Interface\\AddOns\\STIK_DM\\IMG\\main-panel-background.blp",
+                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                tile = false, tileSize = 32, edgeSize = 32,
+                insets = { left = 12, right = 12, top = 12, bottom = 12 },
+            });
+
+        local MainPanelTitle = MainPanelSTIK_DM:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            MainPanelTitle:SetPoint("CENTER", MainPanelSTIK_DM, "TOP", 0, -25);
+            MainPanelTitle:SetText(texts.panels.main.title);
+            MainPanelTitle:SetFontObject(GameFontNormal);
+            MainPanelTitle:SetTextHeight(14);
+            MainPanelTitle:Show();
+
+        local DMCloseButton = CreateFrame("Button", "DMCloseButton", MainPanelSTIK_DM, "UIPanelButtonTemplate");
+            DMCloseButton:SetPoint("CENTER", AddPlotView, "TOP", 130, -25);
+            DMCloseButton:SetHeight(24);
+            DMCloseButton:SetWidth(32);
+            DMCloseButton:SetText('x');
+            DMCloseButton:RegisterForClicks("AnyUp");
+            DMCloseButton:SetScript("OnClick", function() MainPanelSTIK_DM:Hide(); end);
+
+        if (#plots > 4) then
+            local scrollBar = CreateFrame("Slider", nil, MainPanelSTIK_DM, "UIPanelScrollBarTemplate")
+            scrollBar:SetPoint("RIGHT", MainPanelSTIK_DM, "RIGHT", -10, 19);
+            AddPlotView:EnableMouse();
+            scrollBar:SetSize(30, 140);
+            scrollBar:SetMinMaxValues(0, #plots - 4);
+            scrollBar:SetValueStep(1);
+            scrollBar:SetValue(STIK_MAIN_PANEL_OFFSET);
+            
+            scrollBar:SetScript("OnValueChanged", function(self, value)
+                STIK_MAIN_PANEL_OFFSET = value;
+                MainPanelSTIK_DM:Hide();
+                MainPanelSTIK_DM = createMainPanel();
+            end)
+        end;        
+
+        createAddPlotPanel(MainPanelSTIK_DM);
+        if (#plots > 0) then
+            for index = 1 + STIK_MAIN_PANEL_OFFSET, 4 + STIK_MAIN_PANEL_OFFSET do
+                print(plots[index].id);
+                createPlotPanel(MainPanelSTIK_DM, plots[index], index);
+            end;
+        end;
+
+        return MainPanelSTIK_DM;
+    end;
+  
+    local function createAddPlotView()
+        AddPlotView = CreateFrame("Frame", "AddPlotView", UIParent);
+            AddPlotView:Hide();
+            AddPlotView:EnableMouse();
+            AddPlotView:SetWidth(320);
+            AddPlotView:SetHeight(320);
+            AddPlotView:SetToplevel(true);
+            AddPlotView:SetBackdropColor(0, 0, 0, 1);
+            AddPlotView:SetFrameStrata("FULLSCREEN_DIALOG");
+            AddPlotView:SetPoint("CENTER", UIParent, "CENTER", 0, 0);
+            AddPlotView:SetBackdrop({
+                bgFile = "Interface\\AddOns\\STIK_DM\\IMG\\plot-panel-background.blp",
+                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                tile = false, tileSize = 32, edgeSize = 32,
+                insets = { left = 12, right = 12, top = 12, bottom = 12 },
+            });
+
+        local AddPlotViewTitle = AddPlotView:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            AddPlotViewTitle:SetPoint("CENTER", AddPlotView, "TOP", 0, -25);
+            AddPlotViewTitle:SetText(texts.panels.plot.title);
+            AddPlotViewTitle:SetTextHeight(14);
+            AddPlotViewTitle:Show();
+
+        local AddPlotViewCloseButton = CreateFrame("Button", "AddPlotViewCloseButton", AddPlotView, "UIPanelButtonTemplate");
+            AddPlotViewCloseButton:SetPoint("CENTER", AddPlotView, "TOP", 130, -25);
+            AddPlotViewCloseButton:SetHeight(24);
+            AddPlotViewCloseButton:SetWidth(32);
+            AddPlotViewCloseButton:SetText('x');
+            AddPlotViewCloseButton:RegisterForClicks("AnyUp");
+            AddPlotViewCloseButton:SetScript("OnClick", function() AddPlotView:Hide(); end);
+
+        local AddPlotViewNameInputLabel = AddPlotView:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            AddPlotViewNameInputLabel:SetPoint("TOPLEFT", AddPlotView, "TOP", -133, -70);
+            AddPlotViewNameInputLabel:SetText(texts.panels.plot.name);
+            AddPlotViewNameInputLabel:Show();
+
+        local AddPlotViewNameInput = CreateFrame("EditBox", "AddPlotViewNameInput", AddPlotView, "InputBoxTemplate");
+            AddPlotViewNameInput:SetAutoFocus(false)
+            AddPlotViewNameInput:Show();
+            AddPlotViewNameInput:SetWidth(256);
+            AddPlotViewNameInput:SetHeight(32);
+            AddPlotViewNameInput:SetToplevel(true);
+            AddPlotViewNameInput:SetPoint("CENTER", AddPlotView, "TOP", 0, -94);
+            AddPlotViewNameInput:SetTextInsets(2, 0, 0, 0);
+            AddPlotViewNameInput:SetMaxLetters(26);
+            AddPlotViewNameInput:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                insets = {left = -1, right = 1, top = 8, bottom = 8},
+            })
+            AddPlotViewNameInput:SetBackdropColor(0, 0, 0)
+            AddPlotViewNameInput:SetScript("OnTabPressed", function() AddPlotViewDescriptionInput:SetFocus(); end)
+
+        local AddPlotViewDescriptionInputLabel = AddPlotView:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            AddPlotViewDescriptionInputLabel:SetPoint("TOPLEFT", AddPlotView, "TOP", -133, -125);
+            AddPlotViewDescriptionInputLabel:SetText(texts.panels.plot.description);
+            AddPlotViewDescriptionInputLabel:Show();
+
+        local AddPlotViewDescriptionInput = CreateFrame("EditBox", "AddPlotViewDescriptionInput", AddPlotView);
+            AddPlotViewDescriptionInput:SetMultiLine(true);
+            AddPlotViewDescriptionInput:SetSize(264, 100)
+            AddPlotViewDescriptionInput:SetPoint("TOP", AddPlotView, "TOP", -3, -138)
+            AddPlotViewDescriptionInput:SetAutoFocus(false);
+            AddPlotViewDescriptionInput:SetFont("Fonts\\FRIZQT__.TTF", 12)
+            AddPlotViewDescriptionInput:SetJustifyH("LEFT")
+            AddPlotViewDescriptionInput:SetJustifyV("CENTER")
+            AddPlotViewDescriptionInput:SetTextInsets(8, 8, 4, 4);
+            AddPlotViewDescriptionInput:SetMaxLetters(200);
+            AddPlotViewDescriptionInput:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+                edgeSize = 14,
+                insets = {left = 3, right = 3, top = 3, bottom = 3},
+            });
+            AddPlotViewDescriptionInput:SetBackdropColor(0, 0, 0);
+            AddPlotViewDescriptionInput:SetBackdropBorderColor(0.3, 0.3, 0.3);
+            AddPlotViewDescriptionInput:SetScript("OnEscapePressed", function() AddPlotViewDescriptionInput:ClearFocus(); end);
+            AddPlotViewDescriptionInput:SetScript("OnTabPressed", function() AddPlotViewNameInput:SetFocus(); end);
+
+        local AddPlotViewCreateButton = CreateFrame("Button", "AddPlotViewCreateButton", AddPlotView, "UIPanelButtonTemplate");
+            AddPlotViewCreateButton:SetPoint("CENTER", AddPlotView, "TOP", 80, -282);
+            AddPlotViewCreateButton:SetHeight(36);
+            AddPlotViewCreateButton:SetWidth(92);
+            AddPlotViewCreateButton:SetText(texts.panels.plot.submit);
+            AddPlotViewCreateButton:RegisterForClicks("AnyUp");
+            AddPlotViewCreateButton:SetScript("OnClick", function()
+                local plotInfo = {
+                    id = UnitName("player").."-"..(#plots + 1).."-"..math.random(999999),
+                    name = AddPlotViewNameInput:GetText(),
+                    description = AddPlotViewDescriptionInput:GetText(),
+                    players = { },
+                };
+
+                if (plotInfo.name == '') then
+                    AddPlotViewNameInputLabel:SetText(texts.panels.plot.name..' (Не должно быть пустым!)');
+                    return nil;
+                else AddPlotViewNameInputLabel:SetText(texts.panels.plot.name);
+                end;
+
+                if (plotInfo.description == '') then
+                    AddPlotViewDescriptionInputLabel:SetText(texts.panels.plot.description..' (Не должно быть пустым!)');
+                    return nil;
+                else AddPlotViewDescriptionInputLabel:SetText(texts.panels.plot.description);
+                end;
+                table.insert(plots, plotInfo);
+                AddPlotView:Hide();
+                MainPanelSTIK_DM = createMainPanel();
+                AddPlotViewNameInput:SetText('');
+                AddPlotViewDescriptionInput:SetText('');
+            end);
+    end;
+
+    createAddPlotView();
+    MainPanelSTIK_DM = createMainPanel();
+end;
+
+function DMAddonReady()
+    plots = plots or { };
+    if (#plots > 0) then print(plots[1].name) else print('EMPTY') end;
+    DM_REGISTER_COMMANDS();
+    DM_REGISTER_PANELS();
+end;
+
 STIKDMMiniMapButtonPosition = {
 	locationAngle = -45,
 	x = 52-(80*cos(-45)),
@@ -258,13 +514,13 @@ STIKDMMiniMapButtonPosition = {
 
 function STIK_DM_MiniMapButtonPosition_LoadFromDefaults()
 	STIKButton:SetPoint("TOPLEFT","Minimap","TOPLEFT",STIKMiniMapButtonPosition.x,STIKMiniMapButtonPosition.y);
-end
+end;
 
 function STIKDMMiniMapButton_Reposition()
 	STIKDMMiniMapButtonPosition.x = 52-(80*cos(STIKDMMiniMapButtonPosition.locationAngle));
 	STIKDMMiniMapButtonPosition.y = ((80*sin(STIKDMMiniMapButtonPosition.locationAngle))-52);
 	STIK_DM_MiniMapButton:SetPoint("TOPLEFT","Minimap","TOPLEFT",STIKDMMiniMapButtonPosition.x,STIKDMMiniMapButtonPosition.y);
-end
+end;
 
 function STIK_DM_MiniMapButton_Minimap_Update()
 	local xpos,ypos = GetCursorPosition();
@@ -275,4 +531,12 @@ function STIK_DM_MiniMapButton_Minimap_Update()
 
 	STIKDMMiniMapButtonPosition.locationAngle = math.deg(math.atan2(ypos,xpos));
 	STIKDMMiniMapButton_Reposition();
-end
+end;
+
+function STIK_DM_MiniMapButton_OnClick()
+    if MainPanelSTIK_DM:IsVisible() then
+        MainPanelSTIK_DM:Hide();
+        AddPlotView:Hide();
+    else MainPanelSTIK_DM:Show();
+    end;
+end;
