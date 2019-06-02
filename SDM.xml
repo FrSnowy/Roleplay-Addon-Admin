@@ -4,11 +4,16 @@
 		<Scripts>
 			<OnLoad>
 			    self:RegisterEvent("VARIABLES_LOADED");
+                self:RegisterEvent("CHAT_MSG_ADDON");
 			</OnLoad>
 			<onEvent>
 			    if( event == "VARIABLES_LOADED" ) then
 				    DMAddonReady();
 			    end
+
+				if ( event == "CHAT_MSG_ADDON" ) then
+					OnPlayerSay(arg1, arg2, arg3, arg4);
+				end
 		    </onEvent>
 		</Scripts>
 	</Frame>

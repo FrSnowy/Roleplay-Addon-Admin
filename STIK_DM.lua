@@ -3,22 +3,22 @@ function DM_REGISTER_COMMANDS()
         return UnitName("target") or nil;
     end;
 
-    local function NotifyPrivate (prefix, target, value)
+    local function NotifyPrivate (msg, target, value)
         if (target == nil) then print("У вас нет цели");
-        else SendAddonMessage(prefix..' '..value, nil, "WHISPER", target);
+        else SendAddonMessage('STIK_SYSTEM', msg.."&"..value, "WHISPER", target);
         end;
     end;
 
-    local function NotifyParty (prefix, target, value)
-        SendAddonMessage(prefix..' '..value, nil, "RAID");
+    local function NotifyParty (msg, target, value)
+        SendAddonMessage('STIK_SYSTEM', msg.."&"..value, "RAID");
     end;
 
     local function RegisterExperienceCommands()
         SlashCmdList['giveExpCommand'] = function(msg)
-            NotifyPrivate("S1", recieveTargetName(), msg or 0);
+            NotifyPrivate('give_exp', recieveTargetName(), msg or 0);
         end;
         SlashCmdList['giveExpCommandRaid'] = function(msg)
-            NotifyParty("S1", recieveTargetName(), msg or 0);
+            NotifyParty('give_exp', recieveTargetName(), msg or 0);
         end;
 
         SLASH_giveExpCommand1 = '/give_exp';
@@ -28,7 +28,7 @@ function DM_REGISTER_COMMANDS()
 
     local function RegsterLevelControllCommanads()
         SlashCmdList['setLevelCommand'] = function(msg)
-            NotifyPrivate('S2', recieveTargetName(), msg or nil);
+            NotifyPrivate('set_level', recieveTargetName(), msg or nil);
         end;
 
         SLASH_setLevelCommand1 = '/set_level';
@@ -36,7 +36,7 @@ function DM_REGISTER_COMMANDS()
 
     local function RegsterInfoCommand()
         SlashCmdList['getInfoCommand'] = function(msg)
-            NotifyPrivate('S3', recieveTargetName(), UnitName("player"));
+            NotifyPrivate('get_info', recieveTargetName(), UnitName("player"));
         end;
 
         SLASH_getInfoCommand1 = '/get_info';
@@ -44,25 +44,25 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterHealthControllCommands()
         SlashCmdList['setHealthCommand'] = function(msg)
-            NotifyPrivate('S4', recieveTargetName(), msg or nil);
+            NotifyPrivate('mod_hp', recieveTargetName(), msg or nil);
         end;
 
-        SLASH_setHealthCommand1 = '/add_health';
-        SLASH_setHealthCommand2 = '/add_hp';
+        SLASH_setHealthCommand1 = '/mod_health';
+        SLASH_setHealthCommand2 = '/mod_hp';
     end;
 
     local function RegisterBattleControllCommands()
         SlashCmdList['startBattleCommand'] = function(msg)
-            NotifyPrivate('S5', recieveTargetName(), 1);
+            NotifyPrivate('change_battle_state', recieveTargetName(), 1);
         end;
         SlashCmdList['startBattleCommandRaid'] = function(msg)
-            NotifyParty("S5", recieveTargetName(), 1);
+            NotifyParty('change_battle_state', recieveTargetName(), 1);
         end;
         SlashCmdList['endBattleCommand'] = function(msg)
-            NotifyPrivate('S5', recieveTargetName(), 0);
+            NotifyPrivate('change_battle_state', recieveTargetName(), 0);
         end;
         SlashCmdList['endBattleCommandRaid'] = function(msg)
-            NotifyParty("S5", recieveTargetName(), 0);
+            NotifyParty('change_battle_state', recieveTargetName(), 0);
         end;
 
         SLASH_startBattleCommand1 = '/battle_start';
@@ -75,11 +75,11 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterRestoreHPCommand()
         SlashCmdList['restoreHpCommand'] = function(msg)
-            NotifyPrivate('S6', recieveTargetName(), msg or nil);
+            NotifyPrivate('restore_hp', recieveTargetName(), msg or nil);
         end;
 
         SlashCmdList['restoreHpCommandRaid'] = function(msg)
-            NotifyParty('S6', recieveTargetName(), msg or nil);
+            NotifyParty('restore_hp', recieveTargetName(), msg or nil);
         end;
 
         SLASH_restoreHpCommand1 = '/restore_health';
@@ -125,20 +125,24 @@ function DM_REGISTER_COMMANDS()
         end;
         SlashCmdList['playMusicCommand'] = function(msg)
             local category, trackNumber = strsplit(' ', msg);
-            if (isAllFilled(msg, category, trackNumber)) then NotifyPrivate('S7', recieveTargetName(), category..'_'..trackNumber) end;
+            if (isAllFilled(msg, category, trackNumber)) then
+                NotifyPrivate('play_music', recieveTargetName(), category..'_'..trackNumber)
+            end;
         end;
 
         SlashCmdList['playMusicCommandRaid'] = function(msg)
             local category, trackNumber = strsplit(' ', msg);
-            if (isAllFilled(msg, category, trackNumber)) then NotifyParty('S7', recieveTargetName(), category..'_'..trackNumber) end;
+            if (isAllFilled(msg, category, trackNumber)) then
+                NotifyParty('play_music', recieveTargetName(), category..'_'..trackNumber)
+            end;
         end;
 
         SlashCmdList['stopMusicCommand'] = function(msg)
-            NotifyPrivate('S8', recieveTargetName(), '');
+            NotifyPrivate('stop_music', recieveTargetName(), '');
         end;
 
         SlashCmdList['stopMusicCommandRaid'] = function(msg)
-            NotifyParty('S8', recieveTargetName(), '');
+            NotifyParty('stop_music', recieveTargetName(), '');
         end;
         SLASH_playMusicCommand1 = '/play_music';
         SLASH_playMusicCommandRaid1 = '/play_music_raid';
@@ -150,31 +154,31 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterBarrierCommands()
         SlashCmdList['setBarrierCommand'] = function(msg)
-            NotifyPrivate('S9', recieveTargetName(), msg or nil);
+            NotifyPrivate('mod_barrier', recieveTargetName(), msg or nil);
         end;
 
         SlashCmdList['setBarrierCommandRaid'] = function(msg)
-            NotifyParty('S9', recieveTargetName(), msg or nil);
+            NotifyParty('mod_barrier', recieveTargetName(), msg or nil);
         end;
 
-        SLASH_setBarrierCommand1 = '/add_barrier';
-        SLASH_setBarrierCommand2 = '/add_br';
+        SLASH_setBarrierCommand1 = '/mod_barrier';
+        SLASH_setBarrierCommand2 = '/mod_br';
 
-        SLASH_setBarrierCommandRaid1 = '/add_barrier_raid';
-        SLASH_setBarrierCommandRaid2 = '/add_barrier_r';
-        SLASH_setBarrierCommandRaid3 = '/add_br_raid';
-        SLASH_setBarrierCommandRaid4 = '/add_br_r';
+        SLASH_setBarrierCommandRaid1 = '/mod_barrier_raid';
+        SLASH_setBarrierCommandRaid2 = '/mod_barrier_r';
+        SLASH_setBarrierCommandRaid3 = '/mod_br_raid';
+        SLASH_setBarrierCommandRaid4 = '/mod_br_r';
     end;
 
     local function RegisterDamageCommands()
         SlashCmdList['damageCommand'] = function(msg)
             local damage = math.abs(tonumber(msg));
-            NotifyPrivate('S10', recieveTargetName(), damage);
+            NotifyPrivate('damage', recieveTargetName(), damage);
         end;
 
         SlashCmdList['damageCommandRaid'] = function(msg)
             local damage = math.abs(tonumber(msg));
-            NotifyParty('S10', recieveTargetName(), damage);
+            NotifyParty('damage', recieveTargetName(), damage);
         end;
 
         SLASH_damageCommand1 = '/damage';
@@ -188,7 +192,7 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterKickCommands()
         SlashCmdList['kickCommand'] = function(msg)
-            NotifyPrivate('SK', recieveTargetName(), '');
+            NotifyPrivate('kick', recieveTargetName(), '');
         end;
 
         SLASH_kickCommand1 = '/gamekick';
@@ -221,12 +225,16 @@ function DM_REGISTER_COMMANDS()
 
         SlashCmdList['effectCommand'] = function(msg)
             local category, trackNumber = strsplit(' ', msg);
-            if (isAllFilled(msg, category, trackNumber)) then NotifyPrivate('S11', recieveTargetName(), category..'_'..trackNumber) end;
+            if (isAllFilled(msg, category, trackNumber)) then
+                NotifyPrivate('play_effect', recieveTargetName(), category..'_'..trackNumber);
+            end;
         end;
         
         SlashCmdList['effectCommandRaid'] = function(msg)
             local category, trackNumber = strsplit(' ', msg);
-            if (isAllFilled(msg, category, trackNumber)) then NotifyParty('S11', recieveTargetName(), category..'_'..trackNumber) end;
+            if (isAllFilled(msg, category, trackNumber)) then
+                NotifyParty('play_effect', recieveTargetName(), category..'_'..trackNumber);
+            end;
         end;
 
         SLASH_effectCommand1 = '/play_effect';
@@ -239,17 +247,21 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterInviteCommands()
         SlashCmdList['plotInvite'] = function(msg)
-            NotifyPrivate('SPI', recieveTargetName(), '');
+            NotifyPrivate('invite_to_plot', recieveTargetName(), msg);
+            print('Приглашение отправлено игроку '..recieveTargetName());
         end;
 
         SlashCmdList['plotInviteRaid'] = function(msg)
-            NotifyParty('SPI', recieveTargetName(), '');
+            NotifyParty('invite_to_plot', recieveTargetName(), msg);
         end;
 
         SLASH_plotInvite1 = '/plot_invite';
+        SLASH_plotInvite2 = '/plot_inv';
         
         SLASH_plotInviteRaid1 = '/plot_invite_raid';
         SLASH_plotInviteRaid2 = '/plot_invite_r';
+        SLASH_plotInviteRaid3 = '/plot_inv_raid';
+        SLASH_plotInviteRaid4 = '/plot_inv_r';
     end;
 
     RegisterExperienceCommands();
@@ -288,8 +300,8 @@ function DM_REGISTER_PANELS()
             },
             players = {
                 title = "Игроки",
-                invite = "Добавить",
-                invite_raid = "Группа/рейд",
+                invite = "Позвать",
+                invite_raid = "Позвать пати",
             },
         },
     };
@@ -482,9 +494,14 @@ function DM_REGISTER_PANELS()
     PLOT_PANELS = { };
     PLAYERS_PANELS = { };
     STIK_MAIN_PANEL_OFFSET = 0;
+    STIK_PLAYERS_OFFSET = 0;
     SCROLL_BAR = nil;
+    PLAYERS_SCROLL_BAR = nil;
 
     local function createPlotView(index)
+
+        STIK_PLAYERS_OFFSET = 0;
+
         local function createMainViewPanel()
             local PlotViewPanel = components.titledPanel({
                 parent = UIParent,
@@ -587,6 +604,28 @@ function DM_REGISTER_PANELS()
 
             return PlotViewPanel;
         end;
+
+        local function createPlayer(parent, player, index)
+            local PlayerView = CreateFrame("Button", "PlayerView", parent);
+                PlayerView:Show();
+                PlayerView:EnableMouse();
+                PlayerView:SetWidth(146);
+                PlayerView:SetHeight(32);
+                PlayerView:SetToplevel(true);
+                PlayerView:SetBackdropColor(0, 0, 0, 1);
+                PlayerView:SetFrameStrata("FULLSCREEN_DIALOG");
+                PlayerView:SetPoint("CENTER", parent, "TOP", -30, -55 - 38 * (index - 1 - STIK_PLAYERS_OFFSET));
+                PlayerView:SetNormalTexture("Interface\\AddOns\\STIK_DM\\IMG\\plot-background.blp");
+                PlayerView:SetHighlightTexture("Interface\\AddOns\\STIK_DM\\IMG\\plot-background.blp");
+
+            
+            local PlayerView_Name = PlayerView:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+                PlayerView_Name:SetPoint("LEFT", PlayerView, "LEFT", 0, 0);
+                PlayerView_Name:SetText(player);
+                PlayerView_Name:Show();
+
+            return PlayerView;
+        end;
         
         local function createPlayersViewPanel(mainPanel)
             local PlayerPanel = components.titledPanel({
@@ -601,12 +640,62 @@ function DM_REGISTER_PANELS()
                 },
             });
 
+            PlayerPanel.refresh = function()
+                if (plots[index].players and #plots[index].players > 4) then
+                    if (PLAYERS_SCROLL_BAR) then
+                        PLAYERS_SCROLL_BAR:Show();
+                        PLAYERS_SCROLL_BAR:SetMinMaxValues(0, #plots[index].players - 4);
+                    else
+                        PLAYERS_SCROLL_BAR = CreateFrame("Slider", nil, PlayerPanel, "UIPanelScrollBarTemplate")
+                            PLAYERS_SCROLL_BAR:SetPoint("RIGHT", PlayerPanel, "RIGHT", -24, 15);
+                            PLAYERS_SCROLL_BAR:SetSize(30, 110);
+                            PLAYERS_SCROLL_BAR:SetMinMaxValues(0, #plots[index].players - 4);
+                            PLAYERS_SCROLL_BAR:SetValueStep(1);
+                            PLAYERS_SCROLL_BAR:SetValue(STIK_PLAYERS_OFFSET);
+                            
+                            PLAYERS_SCROLL_BAR:SetScript("OnValueChanged", function(self, value)
+                                STIK_PLAYERS_OFFSET = value;
+                                PlayerPanel.refresh();
+                            end)
+                    end;
+                else
+                    if (PLAYERS_SCROLL_BAR) then PLAYERS_SCROLL_BAR:Hide(); end;
+                end;
+
+                if (#plots[index].players > 0) then
+                    for playerIndex = 1, #PLAYERS_PANELS do
+                        PLAYERS_PANELS[playerIndex]:Hide();
+                    end;
+                    for playerIndex = 1 + STIK_PLAYERS_OFFSET, 4 + STIK_PLAYERS_OFFSET do
+                        if (plots[index].players[playerIndex]) then
+                            PLAYERS_PANELS[playerIndex] = createPlayer(PlayerPanel, plots[index].players[playerIndex], playerIndex);
+                        end;
+                    end;
+                else
+                    for playerIndex = 1, #PLAYERS_PANELS do
+                        PLAYERS_PANELS[playerIndex]:Hide();
+                    end;
+                end;
+            end;
+
             local PlayerInviteButton = components.plusButton({
                 parent = PlayerPanel,
                 width = 80,
                 marginTop = 200, marginLeft = -65,
                 content = texts.panels.players.invite,
                 withoutImageMargin = true,
+                clickHandler = function()
+                    if (plots[index].players) then
+                        for arrIndex, player in pairs(plots[index].players) do
+                            if (player == UnitName("target")) then
+                                print('Игрок '..player..' уже присоединился к этому сюжету.');
+                                return nil;
+                            end;
+                        end;
+                    end;
+                    local plotInfo = plots[index].id..'~'..plots[index].name..'~'..plots[index].description;
+                    SlashCmdList['plotInvite'](plotInfo);
+                end,
             });
             
             local PlayerInviteButton = components.plusButton({
@@ -616,10 +705,13 @@ function DM_REGISTER_PANELS()
                 content = texts.panels.players.invite_raid,
                 withoutImageMargin = true,
             });
+
+            return PlayerPanel;
         end;
         
         local PlotView = createMainViewPanel();
-        createPlayersViewPanel(PlotView);
+        local PlayerPanel = createPlayersViewPanel(PlotView);
+        PlayerPanel.refresh();
         return PlotView;
     end;
 
@@ -646,7 +738,7 @@ function DM_REGISTER_PANELS()
             PlotName:SetText(plot.name);
             PlotName:Show();
 
-        PLOT_PANELS[index] = PlotPanel;
+        return PlotPanel;
     end;
 
     local function createMainPanel()
@@ -664,7 +756,9 @@ function DM_REGISTER_PANELS()
 
         MainPanelSTIK_DM.refresh = function()
             if (#plots > 4) then
-                if (SCROLL_BAR) then SCROLL_BAR:Show();
+                if (SCROLL_BAR) then
+                    SCROLL_BAR:Show();
+                    SCROLL_BAR:SetMinMaxValues(0, #plots - 4);
                 else
                     SCROLL_BAR = CreateFrame("Slider", nil, MainPanelSTIK_DM, "UIPanelScrollBarTemplate")
                         SCROLL_BAR:SetPoint("RIGHT", MainPanelSTIK_DM, "RIGHT", -10, 19);
@@ -689,7 +783,7 @@ function DM_REGISTER_PANELS()
                 end;
                 for index = 1 + STIK_MAIN_PANEL_OFFSET, 4 + STIK_MAIN_PANEL_OFFSET do
                     if (plots[index]) then
-                        createPlotPanel(MainPanelSTIK_DM, plots[index], index);
+                        PLOT_PANELS[index] = createPlotPanel(MainPanelSTIK_DM, plots[index], index);
                     end;
                 end;
             else
@@ -773,7 +867,7 @@ function DM_REGISTER_PANELS()
             content = texts.panels.plot.submit,
             clickHandler = function()
                 local plotInfo = {
-                    id = UnitName("player").."-"..(#plots + 1).."-"..math.random(999999),
+                    id = UnitName("player").."-"..math.random(999999),
                     name = AddPlotView_NameInput:GetText(),
                     description = AddPlotView_DescriptionInput:GetText(),
                     players = { },
@@ -806,9 +900,50 @@ end;
 
 function DMAddonReady()
     plots = plots or { };
-    if (#plots > 0) then print(plots[1].name) else print('EMPTY') end;
     DM_REGISTER_COMMANDS();
     DM_REGISTER_PANELS();
+end;
+
+function OnPlayerSay(prefix, msg, tp, sender)
+    if (not(prefix == 'STIK_PLAYER_ANSWER')) then return end;
+
+    local COMMAND, VALUE = strsplit('&', msg);
+
+    
+    local commandConnector = {
+        invite_accept = function(inviteInfo)
+            local player, meta = strsplit(' ', inviteInfo);
+
+            local inArray = { };
+            for index, plot in pairs(plots) do
+                if (plot.id == meta) then
+                    inArray.founded = true;
+                    inArray.position = index;
+                    break;
+                else
+                    inArray.founded = false;
+                end;
+            end;
+
+            if (not(inArray.founded)) then
+                print('Ключи не совпали, игрок '..player..' не был добавлен в сюжет. Попробуйте выполнить /reload и повторить ещё раз.');
+                return nil;
+            end;
+
+            if (not(plots[inArray.position].players)) then
+                plots[inArray.position].players = { };
+            end;
+
+            table.insert(plots[inArray.position].players, player);
+            print('Игрок '..player..' присоединился к сюжету "'..plots[inArray.position].name..'"');       
+        end,
+        invite_decline = function(inviteInfo)
+            local player = strsplit(' ', inviteInfo);
+            print('Игрок '..player..' отказался присоединиться к сюжету');
+        end,
+    };
+
+    commandConnector[COMMAND](VALUE);
 end;
 
 STIKDMMiniMapButtonPosition = {
