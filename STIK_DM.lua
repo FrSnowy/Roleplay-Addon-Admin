@@ -499,9 +499,7 @@ function DM_REGISTER_PANELS()
     PLAYERS_SCROLL_BAR = nil;
 
     local function createPlotView(index)
-
         STIK_PLAYERS_OFFSET = 0;
-
         local function createMainViewPanel()
             local PlotViewPanel = components.titledPanel({
                 parent = UIParent,
@@ -520,6 +518,7 @@ function DM_REGISTER_PANELS()
                 clickHandler = function()
                     MainPanelSTIK_DM:Show();
                     PlotViewPanel:Hide();
+                    PLAYERS_SCROLL_BAR = nil;
                 end,
             });
             
@@ -644,7 +643,6 @@ function DM_REGISTER_PANELS()
                 if (plots[index].players and #plots[index].players > 4) then
                     if (PLAYERS_SCROLL_BAR) then
                         PLAYERS_SCROLL_BAR:Show();
-                        PLAYERS_SCROLL_BAR:SetMinMaxValues(0, #plots[index].players - 4);
                     else
                         PLAYERS_SCROLL_BAR = CreateFrame("Slider", nil, PlayerPanel, "UIPanelScrollBarTemplate")
                             PLAYERS_SCROLL_BAR:SetPoint("RIGHT", PlayerPanel, "RIGHT", -24, 15);
@@ -709,9 +707,10 @@ function DM_REGISTER_PANELS()
             return PlayerPanel;
         end;
         
-        local PlotView = createMainViewPanel();
+        PlotView = createMainViewPanel();
         local PlayerPanel = createPlayersViewPanel(PlotView);
         PlayerPanel.refresh();
+        PlotView.PlayerPanel = PlayerPanel;
         return PlotView;
     end;
 
@@ -908,8 +907,6 @@ function OnPlayerSay(prefix, msg, tp, sender)
     if (not(prefix == 'STIK_PLAYER_ANSWER')) then return end;
 
     local COMMAND, VALUE = strsplit('&', msg);
-
-    
     local commandConnector = {
         invite_accept = function(inviteInfo)
             local player, meta = strsplit(' ', inviteInfo);
@@ -935,7 +932,8 @@ function OnPlayerSay(prefix, msg, tp, sender)
             end;
 
             table.insert(plots[inArray.position].players, player);
-            print('Игрок '..player..' присоединился к сюжету "'..plots[inArray.position].name..'"');       
+            PlotView.PlayerPanel.refresh();
+            print('Игрок '..player..' присоединился к сюжету "'..plots[inArray.position].name..'"');
         end,
         invite_decline = function(inviteInfo)
             local player = strsplit(' ', inviteInfo);
