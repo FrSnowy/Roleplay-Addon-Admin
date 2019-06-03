@@ -300,8 +300,7 @@ function DM_REGISTER_PANELS()
             },
             players = {
                 title = "Игроки",
-                invite = "Позвать",
-                invite_raid = "Позвать пати",
+                invite = "Пригласить в сюжет",
             },
         },
     };
@@ -604,7 +603,7 @@ function DM_REGISTER_PANELS()
             return PlotViewPanel;
         end;
 
-        local function createPlayer(parent, player, index)
+        local function createPlayer(parent, player, index, plotIndex)
             local PlayerView = CreateFrame("Button", "PlayerView", parent);
                 PlayerView:Show();
                 PlayerView:EnableMouse();
@@ -622,6 +621,16 @@ function DM_REGISTER_PANELS()
                 PlayerView_Name:SetPoint("LEFT", PlayerView, "LEFT", 0, 0);
                 PlayerView_Name:SetText(player);
                 PlayerView_Name:Show();
+
+            local PlayerView_Delete = components.closeButton({
+                parent = PlayerView,
+                position = { x = 60, y = -15 },
+                clickHandler = function()
+                    table.remove(plots[plotIndex].players, index);
+                    PlotView.PlayerPanel.refresh();
+                    print('Игрок '..player..' удален с сюжета.');
+                end,
+            });
 
             return PlayerView;
         end;
@@ -666,7 +675,7 @@ function DM_REGISTER_PANELS()
                     end;
                     for playerIndex = 1 + STIK_PLAYERS_OFFSET, 4 + STIK_PLAYERS_OFFSET do
                         if (plots[index].players[playerIndex]) then
-                            PLAYERS_PANELS[playerIndex] = createPlayer(PlayerPanel, plots[index].players[playerIndex], playerIndex);
+                            PLAYERS_PANELS[playerIndex] = createPlayer(PlayerPanel, plots[index].players[playerIndex], playerIndex, index);
                         end;
                     end;
                 else
@@ -678,8 +687,8 @@ function DM_REGISTER_PANELS()
 
             local PlayerInviteButton = components.plusButton({
                 parent = PlayerPanel,
-                width = 80,
-                marginTop = 200, marginLeft = -65,
+                width = 145,
+                marginTop = 200, marginLeft = -30,
                 content = texts.panels.players.invite,
                 withoutImageMargin = true,
                 clickHandler = function()
@@ -694,14 +703,6 @@ function DM_REGISTER_PANELS()
                     local plotInfo = plots[index].id..'~'..plots[index].name..'~'..plots[index].description;
                     SlashCmdList['plotInvite'](plotInfo);
                 end,
-            });
-            
-            local PlayerInviteButton = components.plusButton({
-                parent = PlayerPanel,
-                width = 100,
-                marginTop = 200, marginLeft = 50,
-                content = texts.panels.players.invite_raid,
-                withoutImageMargin = true,
             });
 
             return PlayerPanel;
@@ -899,6 +900,14 @@ end;
 
 function DMAddonReady()
     plots = plots or { };
+    WAIT_FOR_PLAYER_HERE = false;
+    
+    local isWaitForPlayerFilter = function(frame, event, message, ...)
+        return WAIT_FOR_PLAYER_HERE;
+    end
+
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", isWaitForPlayerFilter)
+
     DM_REGISTER_COMMANDS();
     DM_REGISTER_PANELS();
 end;
