@@ -264,6 +264,17 @@ function DM_REGISTER_COMMANDS()
         SLASH_plotInviteRaid4 = '/plot_inv_r';
     end;
 
+    local function RegisterEventCommands()
+        SlashCmdList['eventInvite'] = function(msg)
+            local player, content = strsplit(' ', msg);
+            NotifyPrivate('invite_to_evt', player, content);
+            print('Приглашение на событие отправлено игроку '..player);
+        end;
+
+        SLASH_eventInvite1 = '/event_invite';
+        SLASH_eventInvite12 = '/event_inv';
+    end;
+
     RegisterExperienceCommands();
     RegsterLevelControllCommanads();
     RegsterInfoCommand();
@@ -276,6 +287,7 @@ function DM_REGISTER_COMMANDS()
     RegisterKickCommands();
     RegisterEffectCommands();
     RegisterInviteCommands();
+    RegisterEventCommands();
 end;
 
 function DM_REGISTER_PANELS()
@@ -301,6 +313,13 @@ function DM_REGISTER_PANELS()
             players = {
                 title = "Игроки",
                 invite = "Пригласить в сюжет",
+            },
+            events = {
+                title = "Событие",
+                allStart = "Начать для всех",
+                groupStart = "Начать из группы",
+                restoreHPOnStart = "Восстановить ОБ",
+                resetShieldOnStart = "Обнулить барьеры",
             },
         },
     };
@@ -487,6 +506,27 @@ function DM_REGISTER_PANELS()
 
             input.Label = label;
             return input;        
+        end,
+        createCheckbox = function (settings)
+            local checkBoxFrame = CreateFrame("Frame", "cb-frame", settings.parent);
+            checkBoxFrame:EnableMouse();
+            checkBoxFrame:SetWidth(settings.wrapper.size.width);
+            checkBoxFrame:SetHeight(settings.wrapper.size.height);
+            checkBoxFrame:SetPoint(settings.wrapper.aligment.x, settings.parent, settings.wrapper.aligment.y, settings.wrapper.point.x, -settings.wrapper.point.y);
+            checkBoxFrame:SetToplevel(true);
+            checkBoxFrame:SetBackdropColor(0, 0, 0, 1);
+            checkBoxFrame:SetFrameStrata("FULLSCREEN_DIALOG");
+
+            checkBoxFrame.Checkbox = CreateFrame("CheckButton", "checkbox", checkBoxFrame, "ChatConfigCheckButtonTemplate");
+            checkBoxFrame.Checkbox:SetPoint(settings.checkbox.aligment.x, checkBoxFrame, settings.checkbox.aligment.y, settings.checkbox.point.x, settings.checkbox.point.y);
+            checkBoxFrame.Checkbox:SetWidth(settings.checkbox.size.width);
+            checkBoxFrame.Checkbox:SetHeight(settings.checkbox.size.height);
+            
+            checkBoxFrame.Content = checkBoxFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight");
+            checkBoxFrame.Content:SetPoint("LEFT", checkBoxFrame.Checkbox, "LEFT", 36, 0);
+            checkBoxFrame.Content:SetText(settings.content);
+
+            return checkBoxFrame;
         end,
     };
 
@@ -700,18 +740,90 @@ function DM_REGISTER_PANELS()
                             end;
                         end;
                     end;
-                    local plotInfo = plots[index].id..'~'..plots[index].name..'~'..plots[index].description;
+                    local plotInfo = UnitName('player')..'~'..plots[index].id..'~'..plots[index].name..'~'..plots[index].description;
                     SlashCmdList['plotInvite'](plotInfo);
                 end,
             });
 
             return PlayerPanel;
         end;
+
+        local function createEventPanel(mainPanel)
+            local EventPanel = components.titledPanel({
+                parent = mainPanel,
+                size = { width = 256, height = 256 },
+                point = { x = 300, y = 0 },
+                backgroundImage = 'event-background',
+                isVisible = true,
+                title = {
+                    content = texts.panels.events.title,
+                    marginTop = 25,
+                },
+            });
+
+            local RestoreHPOnStart = components.createCheckbox({
+                parent = EventPanel,
+                content = texts.panels.events.restoreHPOnStart,
+                wrapper = {
+                    aligment = { x = "TOPLEFT", y = "TOPLEFT" },
+                    point = { x = 24, y = 48 },
+                    size = { width = 220, height = 32 },
+                },
+                checkbox = {
+                    aligment = { x = "TOPLEFT", y = "TOPLEFT" },
+                    point = { x = 0, y = 0 },
+                    size = { width = 32, height = 32 },
+                },                
+            });
+
+            local ResetShieldOnStart = components.createCheckbox({
+                parent = EventPanel,
+                content = texts.panels.events.resetShieldOnStart,
+                wrapper = {
+                    aligment = { x = "TOPLEFT", y = "TOPLEFT" },
+                    point = { x = 24, y = 84 },
+                    size = { width = 220, height = 32 },
+                },
+                checkbox = {
+                    aligment = { x = "TOPLEFT", y = "TOPLEFT" },
+                    point = { x = 0, y = 0 },
+                    size = { width = 32, height = 32 },
+                },                
+            });
+
+            local StartEventButton = components.textButton({
+                parent = EventPanel,
+                size = { width = 132, height = 28 },
+                point = { x = 0, y = -212 },
+                content = texts.panels.events.allStart,
+                clickHandler = function()
+                    for i, player in pairs(plots[index].players) do
+                        local playerName = player;
+                        local plotID = plots[index].id;
+                        local resHP = RestoreHPOnStart.Checkbox:GetChecked() or 0;
+                        local resetShield = ResetShieldOnStart.Checkbox:GetChecked() or 0;
+                        local msg = playerName.." "..UnitName('player').."~"..plotID.."~"..resHP.."~"..resetShield;
+                        SlashCmdList['eventInvite'](msg);
+                    end;
+                end,
+            });
+
+            local StartGroupButton = components.textButton({
+                parent = EventPanel,
+                size = { width = 132, height = 28 },
+                point = { x = 0, y = -176 },
+                content = texts.panels.events.groupStart,
+            });
+
+            return EventPanel;
+        end;
         
         PlotView = createMainViewPanel();
         local PlayerPanel = createPlayersViewPanel(PlotView);
+        local EventPanel = createEventPanel(PlotView);
         PlayerPanel.refresh();
         PlotView.PlayerPanel = PlayerPanel;
+        PlotView.EventPanel = EventPanel;
         return PlotView;
     end;
 
@@ -947,6 +1059,26 @@ function OnPlayerSay(prefix, msg, tp, sender)
         invite_decline = function(inviteInfo)
             local player = strsplit(' ', inviteInfo);
             print('Игрок '..player..' отказался присоединиться к сюжету');
+        end,
+        remove_me = function (metaInfo)
+            local plotID, removingPlayer = strsplit('~', metaInfo);
+            local plotIndex = nil;
+            for i, plot in pairs(plots) do
+                if (plot.id == plotID) then plotIndex = i; break; end;
+            end;
+
+            if (plotIndex == nil) then return; end;
+
+            local playerIndex = nil;
+            for i, player in pairs(plots[plotIndex].players) do
+                if (player == removingPlayer) then playerIndex = i; break; end;
+            end;
+
+            if (playerIndex == nil) then return; end;
+
+            table.remove(plots[plotIndex].players, playerIndex);
+            PlotView.PlayerPanel.refresh();
+            print('Игрок '..removingPlayer..' удалил сюжет из сохраненных, и будет удален из списка участников.');
         end,
     };
 
