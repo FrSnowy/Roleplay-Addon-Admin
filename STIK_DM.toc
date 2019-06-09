@@ -1,7 +1,7 @@
 ## Interface: 30300
 ## Title: ДМ ролевой системы от FriendSnowy
 ## Version: 1.0
-## SavedVariables: plots
+## SavedVariables: plots, CurrentEvent
 ## DefaultState: Enabled
 SDM.xml
 SDMMiniMapButton.xml

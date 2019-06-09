@@ -271,8 +271,27 @@ function DM_REGISTER_COMMANDS()
             print('Приглашение на событие отправлено игроку '..player);
         end;
 
+        SlashCmdList['eventInviteRaid'] = function(msg)
+            NotifyParty('invite_to_evt', nil, msg);
+            print('Приглашение на событие отправлено всем игрокам в группе/рейде');
+        end;
+
         SLASH_eventInvite1 = '/event_invite';
-        SLASH_eventInvite12 = '/event_inv';
+        SLASH_eventInvite2 = '/event_inv';
+
+        SLASH_eventInviteRaid1 = '/event_invite_raid';
+        SLASH_eventInviteRaid2 = '/event_invite_r';
+        SLASH_eventInviteRaid3 = '/event_inv_raid';
+        SLASH_eventInviteRaid4 = '/event_inv_r';
+    end;
+
+    local function RegisterEventFinishCommands()
+        SlashCmdList['eventStop'] = function(msg)
+            local player, content = strsplit(' ', msg);
+            NotifyPrivate('event_stop', player, content);
+        end;
+
+        SLASH_eventStop1 = '/event_stop';
     end;
 
     RegisterExperienceCommands();
@@ -288,6 +307,7 @@ function DM_REGISTER_COMMANDS()
     RegisterEffectCommands();
     RegisterInviteCommands();
     RegisterEventCommands();
+    RegisterEventFinishCommands();
 end;
 
 function DM_REGISTER_PANELS()
@@ -320,6 +340,10 @@ function DM_REGISTER_PANELS()
                 groupStart = "Начать из группы",
                 restoreHPOnStart = "Восстановить ОБ",
                 resetShieldOnStart = "Обнулить барьеры",
+            },
+            controll = {
+                title = "Управление событием",
+                finEvent = "Завешить событие",
             },
         },
     };
@@ -797,14 +821,19 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -212 },
                 content = texts.panels.events.allStart,
                 clickHandler = function()
+                    local plotID = plots[index].id;
+                    local resHP = RestoreHPOnStart.Checkbox:GetChecked() or 0;
+                    local resetShield = ResetShieldOnStart.Checkbox:GetChecked() or 0;
                     for i, player in pairs(plots[index].players) do
                         local playerName = player;
-                        local plotID = plots[index].id;
-                        local resHP = RestoreHPOnStart.Checkbox:GetChecked() or 0;
-                        local resetShield = ResetShieldOnStart.Checkbox:GetChecked() or 0;
                         local msg = playerName.." "..UnitName('player').."~"..plotID.."~"..resHP.."~"..resetShield;
                         SlashCmdList['eventInvite'](msg);
                     end;
+                    CurrentEvent = plotID;
+                    MainPanelSTIK_DM:Hide();
+                    AddPlotView:Hide();
+                    PlotView:Hide();
+                    DM_REGISTER_PANELS();
                 end,
             });
 
@@ -813,6 +842,18 @@ function DM_REGISTER_PANELS()
                 size = { width = 132, height = 28 },
                 point = { x = 0, y = -176 },
                 content = texts.panels.events.groupStart,
+                clickHandler = function()
+                    local plotID = plots[index].id;
+                    local resHP = RestoreHPOnStart.Checkbox:GetChecked() or 0;
+                    local resetShield = ResetShieldOnStart.Checkbox:GetChecked() or 0;
+                    local msg = UnitName('player').."~"..plotID.."~"..resHP.."~"..resetShield;
+                    SlashCmdList['eventInviteRaid'](msg);
+                    CurrentEvent = plotID;
+                    MainPanelSTIK_DM:Hide();
+                    AddPlotView:Hide();
+                    PlotView:Hide();
+                    DM_REGISTER_PANELS();
+                end;
             });
 
             return EventPanel;
@@ -1005,20 +1046,66 @@ function DM_REGISTER_PANELS()
         });
     end;
 
-    createAddPlotView();
-    MainPanelSTIK_DM = createMainPanel();
-    MainPanelSTIK_DM.refresh();
+    local function createEventControllPanel()
+        local controllPanel = components.titledPanel({
+            parent = UIParent,
+            size = { width = 260, height = 260 },
+            point = { x = 300, y = 0 },
+            backgroundImage = 'main-panel-background',
+            isVisible = true,
+            title = {
+                content = texts.panels.controll.title,
+                marginTop = 25,
+            },
+        });
+
+        controllPanel:SetMovable(true);
+        controllPanel:EnableMouse(true)
+        controllPanel:RegisterForDrag("LeftButton")
+        controllPanel:SetScript("OnDragStart", controllPanel.StartMoving)
+        controllPanel:SetScript("OnDragStop", controllPanel.StopMovingOrSizing)
+
+        local finishButton = components.textButton({
+            parent = controllPanel,
+            size = { width = 160, height = 32 },
+            point = { x = 0, y = -210 },
+            content = texts.panels.controll.finEvent;
+            clickHandler = function()
+                local index = nil;
+                for i, plot in pairs(plots) do
+                    if (plot.id == CurrentEvent) then index = i; break; end;
+                end
+
+                if (index == nil) then
+                    print('ID события поврежден');
+                    return;
+                end;
+                
+                local plot = plots[index];
+                for i, player in pairs(plot.players) do
+                    SlashCmdList['eventStop'](player.." "..CurrentEvent);
+                end
+                
+                CurrentEvent = nil;
+                MainPanelSTIK_DM:Hide();
+                DM_REGISTER_PANELS();
+            end,
+        });
+
+        return controllPanel;
+    end;
+
+    if (CurrentEvent == nil) then
+        createAddPlotView();
+        MainPanelSTIK_DM = createMainPanel();
+        MainPanelSTIK_DM.refresh();
+    else
+        MainPanelSTIK_DM = createEventControllPanel();
+    end;
 end;
 
 function DMAddonReady()
     plots = plots or { };
-    WAIT_FOR_PLAYER_HERE = false;
-    
-    local isWaitForPlayerFilter = function(frame, event, message, ...)
-        return WAIT_FOR_PLAYER_HERE;
-    end
-
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", isWaitForPlayerFilter)
 
     DM_REGISTER_COMMANDS();
     DM_REGISTER_PANELS();
@@ -1079,6 +1166,17 @@ function OnPlayerSay(prefix, msg, tp, sender)
             table.remove(plots[plotIndex].players, playerIndex);
             PlotView.PlayerPanel.refresh();
             print('Игрок '..removingPlayer..' удалил сюжет из сохраненных, и будет удален из списка участников.');
+        end,
+        event_decline = function(player)
+            print('Игрок '..player..' отказался принять участие в событии');
+        end,
+        event_accept = function(player)
+            if (player == UnitName("player")) then return nil end;
+            InviteUnit(player);
+        end,
+        maybe_raid = function() ConvertToRaid(); end,
+        leave_event = function(player)
+            print('Игрок '..player..' покинул текущее событие');
         end,
     };
 
