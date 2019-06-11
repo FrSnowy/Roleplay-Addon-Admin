@@ -496,52 +496,35 @@ function DM_REGISTER_PANELS()
                 label:SetText(parameters.label.content);
                 label:Show();
 
-            local input = nil;
+            local input = CreateFrame("EditBox", "input", parameters.parent);
+            input:SetMultiLine(parameters.input.multiline);
+            input:SetSize(parameters.input.size.width, parameters.input.size.height);
+            input:SetPoint("TOP", parameters.parent, "TOP", parameters.input.point.x, parameters.input.point.y)
+            input:SetAutoFocus(false);
+            input:SetFont("Fonts\\FRIZQT__.TTF", 12)
+            input:SetJustifyH("LEFT")
+            input:SetJustifyV("CENTER")
+            input:SetTextInsets(8, 8, 4, 4);
+            local wordCount = nil;
             if (parameters.input.multiline) then
-                local input = CreateFrame("EditBox", "input", parameters.parent);
-                    input:SetMultiLine(true);
-                    input:SetSize(parameters.input.size.width, parameters.input.size.height);
-                    input:SetPoint("TOP", parameters.parent, "TOP", parameters.input.point.x, parameters.input.point.y)
-                    input:SetAutoFocus(false);
-                    input:SetFont("Fonts\\FRIZQT__.TTF", 12)
-                    input:SetJustifyH("LEFT")
-                    input:SetJustifyV("CENTER")
-                    input:SetTextInsets(8, 8, 4, 4);
-                    input:SetMaxLetters(parameters.input.maxLetters or 200);
-                    input:SetText(parameters.input.content or '');
-                    input:SetBackdrop({
-                        bgFile = [[Interface\Buttons\WHITE8x8]],
-                        edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
-                        edgeSize = 14,
-                        insets = {left = 3, right = 3, top = 3, bottom = 3},
-                    });
-                    input:SetBackdropColor(0, 0, 0);
-                    input:SetBackdropBorderColor(0.3, 0.3, 0.3);
-                    input:SetScript("OnEscapePressed", function() input:ClearFocus(); end);
-                    input:SetScript("OnTabPressed", parameters.input.tabPressHandler or nil);
-                    input.Label = label;
-                    return input;
+                wordCount = 200;
             else
-                local input = CreateFrame("EditBox", "input", parameters.parent, "InputBoxTemplate");
-                    input:Show();
-                    input:SetAutoFocus(false)
-                    input:SetSize(parameters.input.size.width, parameters.input.size.height)
-                    input:SetToplevel(true);
-                    input:SetPoint("CENTER", parameters.parent, "TOP", parameters.input.point.x, parameters.input.point.y);
-                    input:SetText(parameters.input.content or '');
-                    input:SetMaxLetters(parameters.input.maxLetters or 26);
-                    input:SetTextInsets(2, 0, 0, 0);
-                    if (parameters.withoutBorder == nil) then
-                        input:SetBackdrop({
-                            bgFile = [[Interface\Buttons\WHITE8x8]],
-                            insets = {left = -1, right = 1, top = 8, bottom = 8},
-                        });
-                    end;
-                    input:SetBackdropColor(0, 0, 0);
-                    input:SetScript("OnTabPressed", parameters.input.tabPressHandler or nil);
-                    input.Label = label;
-                    return input;
-            end;   
+                wordCount = 26;
+            end;
+            input:SetMaxLetters(parameters.input.maxLetters or wordCount);
+            input:SetText(parameters.input.content or '');
+            input:SetBackdrop({
+                bgFile = [[Interface\Buttons\WHITE8x8]],
+                edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+                edgeSize = 14,
+                insets = {left = 3, right = 3, top = 3, bottom = 3},
+            });
+            input:SetBackdropColor(0, 0, 0);
+            input:SetBackdropBorderColor(0.3, 0.3, 0.3);
+            input:SetScript("OnEscapePressed", function() input:ClearFocus(); end);
+            input:SetScript("OnTabPressed", parameters.input.tabPressHandler or nil);
+            input.Label = label;
+            return input;
         end,
         createCheckbox = function (settings)
             local checkBoxFrame = CreateFrame("Frame", "cb-frame", settings.parent);
@@ -605,8 +588,8 @@ function DM_REGISTER_PANELS()
                 },
                 input = {
                     multiline = false,
-                    size = { width = 256, height = 32 },
-                    point = { x = 0, y = -95 },
+                    size = { width = 263, height = 32 },
+                    point = { x = -3, y = -82 },
                     content = plots[index].name,
                     tabPressHandler = function() PlotViewDescription_Input:SetFocus(); end,
                 }
@@ -1004,8 +987,8 @@ function DM_REGISTER_PANELS()
             },
             input = {
                 multiline = false,
-                size = { width = 256, height = 32 },
-                point = { x = 0, y = -94 },
+                size = { width = 264, height = 32 },
+                point = { x = -1, y = -86 },
                 tabPressHandler = function() AddPlotView.descriptionInput:SetFocus(); end,
             }
         });
@@ -1128,8 +1111,8 @@ function DM_REGISTER_PANELS()
                 parent = view,
                 input = {
                     multiline = false,
-                    size = { width = 180, height = 32 },
-                    point = { x = 0, y = -72 },
+                    size = { width = 180, height = 24 },
+                    point = { x = -4, y = -62 },
                     content = 0,
                     maxLetters = 4,
                     withoutBorder = true,
@@ -1139,7 +1122,6 @@ function DM_REGISTER_PANELS()
                     point = { x = -94, y = -48 }
                 },
             });
-
             view.input:SetNumeric();
 
             view.giveExpSingle = components.textButton({
@@ -1194,7 +1176,7 @@ function DM_REGISTER_PANELS()
 
             return expView;
         end;
-
+        
         local levelView = function(controllPanel)
             local view = components.titledPanel({
                 parent = controllPanel,
@@ -1213,8 +1195,8 @@ function DM_REGISTER_PANELS()
                 parent = view,
                 input = {
                     multiline = false,
-                    size = { width = 180, height = 32 },
-                    point = { x = 0, y = -72 },
+                    size = { width = 180, height = 24 },
+                    point = { x = -4, y = -62 },
                     content = 1,
                     maxLetters = 2,
                     withoutBorder = true,
@@ -1278,8 +1260,8 @@ function DM_REGISTER_PANELS()
                 parent = view,
                 input = {
                     multiline = false,
-                    size = { width = 180, height = 32 },
-                    point = { x = 0, y = -72 },
+                    size = { width = 180, height = 24 },
+                    point = { x = -4, y = -62 },
                     content = 0,
                     maxLetters = 4,
                     withoutBorder = true,
@@ -1343,8 +1325,8 @@ function DM_REGISTER_PANELS()
                 parent = view,
                 input = {
                     multiline = false,
-                    size = { width = 180, height = 32 },
-                    point = { x = 0, y = -72 },
+                    size = { width = 180, height = 24 },
+                    point = { x = -4, y = -62 },
                     content = 0,
                     maxLetters = 4,
                     withoutBorder = true,
@@ -1426,8 +1408,8 @@ function DM_REGISTER_PANELS()
                 parent = view,
                 input = {
                     multiline = false,
-                    size = { width = 180, height = 32 },
-                    point = { x = 0, y = -72 },
+                    size = { width = 180, height = 24 },
+                    point = { x = -4, y = -62 },
                     content = 0,
                     maxLetters = 4,
                     withoutBorder = true,
@@ -1582,8 +1564,8 @@ function DM_REGISTER_PANELS()
                     input = {
                         multiline = false,
                         withoutBorder = true,
-                        size = { width = 180, height = 26 },
-                        point = { x = 0, y = -72 },
+                        size = { width = 180, height = 24 },
+                        point = { x = -4, y = -62 },
                         content = 1,
                         maxLetters = 2,
                     },
