@@ -4,13 +4,19 @@ function DM_REGISTER_COMMANDS()
     end;
 
     local function NotifyPrivate (msg, target, value)
+        if (not(CurrentEvent)) then
+            print('Вы не можете посылать команды игрокам вне события');
+        end;
         if (target == nil) then print("У вас нет цели");
-        else SendAddonMessage('STIK_SYSTEM', msg.."&"..value, "WHISPER", target);
+        else SendAddonMessage('STIK_SYSTEM', msg.."&"..value.."&"..CurrentEvent, "WHISPER", target);
         end;
     end;
 
     local function NotifyParty (msg, target, value)
-        SendAddonMessage('STIK_SYSTEM', msg.."&"..value, "RAID");
+        if (not(CurrentEvent)) then
+            print('Вы не можете посылать команды игрокам вне события');
+        end;
+        SendAddonMessage('STIK_SYSTEM', msg.."&"..value.."&"..CurrentEvent, "RAID");
     end;
 
     local function RegisterExperienceCommands()
@@ -75,11 +81,11 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterRestoreHPCommand()
         SlashCmdList['restoreHpCommand'] = function(msg)
-            NotifyPrivate('restore_hp', recieveTargetName(), msg or nil);
+            NotifyPrivate('restore_hp', recieveTargetName(), msg or '');
         end;
 
         SlashCmdList['restoreHpCommandRaid'] = function(msg)
-            NotifyParty('restore_hp', recieveTargetName(), msg or nil);
+            NotifyParty('restore_hp', recieveTargetName(), msg or '');
         end;
 
         SLASH_restoreHpCommand1 = '/restore_health';
@@ -247,12 +253,12 @@ function DM_REGISTER_COMMANDS()
 
     local function RegisterInviteCommands()
         SlashCmdList['plotInvite'] = function(msg)
-            NotifyPrivate('invite_to_plot', recieveTargetName(), msg);
+            SendAddonMessage('STIK_SYSTEM', 'invite_to_plot&'..msg, "WHISPER", recieveTargetName());
             print('Приглашение отправлено игроку '..recieveTargetName());
         end;
 
         SlashCmdList['plotInviteRaid'] = function(msg)
-            NotifyParty('invite_to_plot', recieveTargetName(), msg);
+            SendAddonMessage('STIK_SYSTEM', 'invite_to_plot&'..msg, "RAID");
         end;
 
         SLASH_plotInvite1 = '/plot_invite';
@@ -267,12 +273,13 @@ function DM_REGISTER_COMMANDS()
     local function RegisterEventCommands()
         SlashCmdList['eventInvite'] = function(msg)
             local player, content = strsplit(' ', msg);
-            NotifyPrivate('invite_to_evt', player, content);
+            
+            SendAddonMessage('STIK_SYSTEM', 'invite_to_evt&'..content, "WHISPER", player);
             print('Приглашение на событие отправлено игроку '..player);
         end;
 
         SlashCmdList['eventInviteRaid'] = function(msg)
-            NotifyParty('invite_to_evt', nil, msg);
+            SendAddonMessage('STIK_SYSTEM', 'invite_to_evt&'..msg, "RAID");
             print('Приглашение на событие отправлено всем игрокам в группе/рейде');
         end;
 
@@ -1017,7 +1024,7 @@ function DM_REGISTER_PANELS()
             content = texts.panels.plot.submit,
             clickHandler = function()
                 local plotInfo = {
-                    id = UnitName("player").."-"..math.random(999999),
+                    id = UnitName("player").."-"..math.random(999999).."-"..math.random(999999).."-"..math.random(999999).."-"..math.random(999999),
                     name = AddPlotView_NameInput:GetText(),
                     description = AddPlotView_DescriptionInput:GetText(),
                     players = { },
@@ -1274,7 +1281,7 @@ function DM_REGISTER_PANELS()
 
             view.input:SetNumeric();
 
-            view.giveExpSingle = components.textButton({
+            view.damageSingle = components.textButton({
                 parent = view,
                 size = { width = 80, height = 32 },
                 point = { x = 48, y = -104 },
@@ -1284,13 +1291,13 @@ function DM_REGISTER_PANELS()
                 end,
             });
 
-            view.giveExpGroup = components.textButton({
+            view.damageGroup = components.textButton({
                 parent = view,
                 size = { width = 80, height = 32 },
                 point = { x = -54, y = -104 },
                 content = "Группе";
                 clickHandler = function()
-                    SlashCmdList['giveExpCommandRaid'](view.input:GetText());
+                    SlashCmdList['damageCommandRaid'](view.input:GetText());
                 end,
             });
 
@@ -1581,7 +1588,12 @@ function DM_REGISTER_PANELS()
                     point = { x = 48, y = -104 },
                     content = "Игроку";
                     clickHandler = function()
-                        SlashCmdList['playMusicCommand'](underPart.category.." "..underPart.number);
+                        local trackNumber = tonumber(underPart.input:GetText())
+                        if (trackNumber < 1 or trackNumber > underPart.number) then
+                            print('Неверный номер трэка');
+                            return nil;
+                        end;
+                        SlashCmdList['playMusicCommand'](underPart.category.." "..trackNumber);
                     end,
                 });
 
@@ -1591,7 +1603,12 @@ function DM_REGISTER_PANELS()
                     point = { x = -54, y = -104 },
                     content = "Группе";
                     clickHandler = function()
-                        SlashCmdList['playMusicCommandRaid'](underPart.category.." "..underPart.number);
+                        local trackNumber = tonumber(underPart.input:GetText())
+                        if (trackNumber < 1 or trackNumber > underPart.number) then
+                            print('Неверный номер трэка');
+                            return nil;
+                        end;
+                        SlashCmdList['playMusicCommandRaid'](underPart.category.." "..trackNumber);
                     end,
                 });
 
@@ -1809,6 +1826,12 @@ function OnPlayerSay(prefix, msg, tp, sender)
         maybe_raid = function() ConvertToRaid(); end,
         leave_event = function(player)
             print('Игрок '..player..' покинул текущее событие');
+        end,
+        not_on_event = function()
+            print('Игрок '..sender..' в данный момент не находится на событии');
+        end,
+        not_on_plot = function()
+            print('Игрок '..sender..' сейчас находится на неконтролируемом вами событии');
         end,
     };
 
