@@ -350,7 +350,7 @@ function DM_REGISTER_PANELS()
             },
             controll = {
                 title = "Управление событием",
-                finEvent = "Завешить событие",
+                finEvent = "Завершить событие",
                 exp = "Опыт",
                 level = "Уровень",
                 info = "Инфо",
@@ -1832,6 +1832,10 @@ function OnPlayerSay(prefix, msg, tp, sender)
         end,
         not_on_plot = function()
             print('Игрок '..sender..' сейчас находится на неконтролируемом вами событии');
+        end,
+        roll_dice = function()
+            local param, size = strsplit(' ', VALUE);
+            print('Игрок '..sender..' бросает '..param..' '..size);
         end,
     };
 
