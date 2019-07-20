@@ -1,3 +1,11 @@
+tracksByCategory = {
+    tvr = 10,
+    epc = 15,
+    pcf = 15,
+    btl = 15,
+    dng = 16,
+};
+
 function DM_REGISTER_COMMANDS()
     local function recieveTargetName ()
         return UnitName("target") or nil;
@@ -113,14 +121,6 @@ function DM_REGISTER_COMMANDS()
                 print('Неверная категория. Доступные: tvr, epc, pcf, dng, btl');
                 return false;
             end;
-
-            local tracksByCategory = {
-                tvr = 10,
-                epc = 10,
-                pcf = 11,
-                btl = 12,
-                dng = 13,
-            };
 
             if (tonumber(trackNumber) < 1 or tonumber(trackNumber) > tracksByCategory[category]) then
                 print ('Неверный номер трека');
@@ -350,6 +350,7 @@ function DM_REGISTER_PANELS()
             },
             controll = {
                 title = "Управление событием",
+                addToEvent = "Добавить в событие",
                 finEvent = "Завершить событие",
                 exp = "Опыт",
                 level = "Уровень",
@@ -1069,11 +1070,27 @@ function DM_REGISTER_PANELS()
             controllPanel:RegisterForDrag("LeftButton")
             controllPanel:SetScript("OnDragStart", controllPanel.StartMoving)
             controllPanel:SetScript("OnDragStop", controllPanel.StopMovingOrSizing)
+
+            local addToEventButton = components.textButton({
+                parent = controllPanel,
+                size = { width = 160, height = 32 },
+                point = { x = 0, y = -200 },
+                content = texts.panels.controll.addToEvent,
+                clickHandler = function()
+                    local plotID = CurrentEvent;
+                    local resHP = 0;
+                    local resetShield = 0;
+                    local playerName = UnitName('target');
+
+                    local msg = playerName.." "..UnitName('player').."~"..plotID.."~"..resHP.."~"..resetShield;
+                    SlashCmdList['eventInvite'](msg);
+                end,
+            })
     
             local finishButton = components.textButton({
                 parent = controllPanel,
                 size = { width = 160, height = 32 },
-                point = { x = 0, y = -210 },
+                point = { x = 0, y = -230 },
                 content = texts.panels.controll.finEvent;
                 clickHandler = function()
                     local index = nil;
@@ -1645,7 +1662,7 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -50 },
                 content = "Таверны";
                 clickHandler = function()
-                    trackNumber = 10;
+                    trackNumber = tracksByCategory.tvr;
                     trackType = 'tvr';
                     displayPopup(view, trackType, trackNumber);
                 end,
@@ -1657,7 +1674,7 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -82 },
                 content = "Подземелья";
                 clickHandler = function()
-                    trackNumber = 13;
+                    trackNumber = tracksByCategory.dng;
                     trackType = 'dng';
                     displayPopup(view, trackType, trackNumber);
                 end,
@@ -1669,7 +1686,7 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -114 },
                 content = "Спокойные";
                 clickHandler = function()
-                    trackNumber = 11;
+                    trackNumber = tracksByCategory.pcf;
                     trackType = 'pcf';
                     displayPopup(view, trackType, trackNumber);
                 end,
@@ -1681,7 +1698,7 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -146 },
                 content = "Сражения";
                 clickHandler = function()
-                    trackNumber = 12;
+                    trackNumber = tracksByCategory.btl;
                     trackType = 'btl';
                     displayPopup(view, trackType, trackNumber);
                 end,
@@ -1693,7 +1710,7 @@ function DM_REGISTER_PANELS()
                 point = { x = 0, y = -178 },
                 content = "Эпичная";
                 clickHandler = function()
-                    trackNumber = 10;
+                    trackNumber = tracksByCategory.epc;
                     trackType = 'epc';
                     displayPopup(view, trackType, trackNumber);
                 end,
