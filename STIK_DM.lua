@@ -1851,7 +1851,7 @@ function OnPlayerSay(prefix, msg, tp, sender)
             print('Игрок '..sender..' сейчас находится на неконтролируемом вами событии');
         end,
         roll_dice = function()
-            local param, size = strsplit(' ', VALUE);
+            local param, size = strsplit('|', VALUE);
             print('Игрок '..sender..' бросает '..param..' '..size);
         end,
     };
